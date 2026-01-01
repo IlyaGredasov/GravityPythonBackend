@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Literal
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 class MovementType(Enum):
@@ -13,7 +14,8 @@ class MovementType(Enum):
 
 
 class SpaceObject:
-    def __init__(self, name: str, mass: float, radius: float, position: np.array, velocity: np.array,
+    def __init__(self, name: str, mass: float, radius: float,
+                 position: NDArray[np.float64], velocity: NDArray[np.float64],
                  movement_type: MovementType = MovementType.ORDINARY):
 
         self.name: str = name
@@ -25,12 +27,12 @@ class SpaceObject:
         self.radius: float = radius
         if len(position) != 2:
             raise ValueError("Position must contain 2 values")
-        self.position: np.array = position.astype(np.float64)
+        self.position: NDArray[np.float64] = position.astype(np.float64)
         if len(velocity) != 2:
             raise ValueError("Velocity must contain 2 values")
-        self.velocity: np.array = np.zeros(2).astype(
+        self.velocity: NDArray[np.float64] = np.zeros(2).astype(
             np.float64) if movement_type == MovementType.STATIC else velocity.astype(np.float64)
-        self.acceleration: np.array = np.zeros(2).astype(np.float64)
+        self.acceleration: NDArray[np.float64] = np.zeros(2).astype(np.float64)
         if movement_type not in [MovementType.STATIC, MovementType.ORDINARY, MovementType.CONTROLLABLE]:
             raise ValueError("Invalid movement_type")
         self.movement_type: MovementType = movement_type
@@ -128,15 +130,15 @@ class Simulation:
             self.space_objects[
                 j].velocity = new_normal_velocity_vector_j * normal_vector + tangent_velocity_vector_j * tangent_vector
 
-    def calculate_acceleration(self, i: int) -> np.array:
+    def calculate_acceleration(self, i: int) -> NDArray[np.float64]:
         if self.space_objects[i].movement_type == MovementType.STATIC:
             return np.zeros(2)
-        acceleration = sum(
-            self.G * self.space_objects[j].mass / np.linalg.norm(
-                self.space_objects[j].position - self.space_objects[i].position) ** 1.5 * (
-                    self.space_objects[j].position -
-                    self.space_objects[i].position)
-            for j in range(len(self.space_objects)) if j != i)
+        acceleration = np.zeros(2, dtype=np.float64)
+        for j in range(len(self.space_objects)):
+            if j != i:
+                acceleration += (self.G * self.space_objects[j].mass / np.linalg.norm(
+                    self.space_objects[j].position - self.space_objects[i].position) ** 1.5) * (
+                                        self.space_objects[j].position - self.space_objects[i].position)
         if self.space_objects[i].movement_type == MovementType.CONTROLLABLE:
             acceleration += self.acceleration_rate * np.array(
                 [self.controllable_acceleration.right - self.controllable_acceleration.left,
