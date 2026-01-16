@@ -10,8 +10,8 @@ from routes import register_routes
 
 app = Flask(__name__)
 CORS(app)
-load_dotenv('.env')
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+load_dotenv(".env")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
 
 register_handlers(socketio)
